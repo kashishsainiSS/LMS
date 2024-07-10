@@ -10,15 +10,20 @@ export interface IAccount extends Document{
 const AccountSchema :Schema = new mongoose.Schema({
     name:{
         type:String,
+        lowercase:true,
+        required:true
     },
     username:{
-        type:String
+        type:String,
+        required:true
     },
     password:{
-        type:String
+        type:String,
+        required:true
     },
     role:{
-        type:String
+        type:String,
+        required:true
     }
 })
 
