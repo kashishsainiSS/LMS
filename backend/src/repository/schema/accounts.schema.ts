@@ -79,7 +79,9 @@ AccountSchema.methods.SignRefreshToken = function(){
 AccountSchema.methods.comparePassword= async function(
     enteredPassword:string
 ):Promise<boolean>{
-    return await bcrypt.compare(this.password, enteredPassword);
+    console.log("this.password",this.password);
+    console.log("enteredPassword",typeof enteredPassword );
+    return await bcrypt.compare(enteredPassword,this.password);
 }
 
 export default  mongoose.model<IAccount>("Account",AccountSchema);

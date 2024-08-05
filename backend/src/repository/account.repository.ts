@@ -86,14 +86,11 @@ interface IActivateRequest{
 }
 export const ActivateUser = CatchAsyncError(async(req:Request, res:Response, next:NextFunction)=>{
   try{
-    console.log("hii")
      const {activation_token, activation_code} = req.body as IActivateRequest;
      const newUser:any=jwt.verify(
       activation_token,
       process.env.SECRET_KEY as string
      );
-
-console.log("new User",newUser);
 
      if(newUser.activationCode !== activation_code){
       return next(new ErrorHandler("Invalid activation code",400));
@@ -126,20 +123,21 @@ interface ILogRequest{
   password:string;
 }
 
-export const loginUserr= CatchAsyncError(async (req:Request, res:Response, next :NextFunction)=>{
+export const loginUser= CatchAsyncError(async (req:Request, res:Response, next :NextFunction)=>{
   try{
     const {email,password} =req.body as ILogRequest;
+    console.log("email,password",email,password);
     if(!email || !password){
       return next(new ErrorHandler("Please enter email and password",400));
     }
     const user = await Account.findOne({email}).select("+password");
-    
+    console.log("User---",user);
     if(!user){
       return next(new ErrorHandler("Invalid email or password",400));
     }
 
     const isPasswordMatch = await user.comparePassword(password);
-
+     console.log("isPasswordMatch",isPasswordMatch);
     if(!isPasswordMatch){
       return next(new ErrorHandler("Invalid email or password",400));
     };
