@@ -18,7 +18,7 @@ export interface IAccount extends Document{
     SignRefreshToken:()=>string;
 }
 
-const AccountSchema :Schema = new mongoose.Schema({
+const AccountSchema :Schema<IAccount> = new mongoose.Schema({
     name:{
         type:String,
         lowercase:true,
