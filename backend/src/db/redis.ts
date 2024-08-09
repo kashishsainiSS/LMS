@@ -24,6 +24,7 @@ const redisClient = () => {
         console.log("Connecting to Redis...");
         return {
             url: process.env.REDIS_URL,
+            // url:"http://localhost:8001/redis-stack/browser",
             maxRetriesPerRequest: 100,
             retryStrategy: (times: number) => {
                 const delay = Math.min(times * 50, 2000);

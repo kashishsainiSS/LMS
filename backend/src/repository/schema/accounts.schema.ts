@@ -6,10 +6,11 @@ export interface IAccount extends Document{
     name:string;
     email:string;
     password:string;
-    avatar:{
-        public_id:string;
-        url:string
-    };
+    // avatar:{
+    //     public_id:string;
+    //     url:string
+    // };
+    avatar:string;
     isVerified:boolean;
     courses:Array<{CourseId:string}>;
     role:string;
@@ -30,12 +31,15 @@ const AccountSchema :Schema<IAccount> = new mongoose.Schema({
     },
     password:{
         type:String,
-        required:true
+        // required:true
     },
     avatar:{
-       public_id:String,
-       url:String
+        type:String,
     },
+    // avatar:{
+    //    public_id:String,
+    //    url:String
+    // },
     isVerified:{
         type:Boolean,
         default:false,
@@ -67,12 +71,16 @@ AccountSchema.pre<IAccount>("save",async function(next){
 
 // sign access Token
 AccountSchema.methods.SignAccessToken = function(){
-    return jwt.sign({id:this._id}, process.env.ACCESS_TOKEN || "" );
+    return jwt.sign({id:this._id}, process.env.ACCESS_TOKEN || "",{
+        expiresIn:"5m"
+    } );
 }
 
 // sign refresh Token
 AccountSchema.methods.SignRefreshToken = function(){
-    return jwt.sign({id:this._id}, process.env.REFRESH_TOKEN || "");
+    return jwt.sign({id:this._id}, process.env.REFRESH_TOKEN || "",{
+        expiresIn:'3d'
+    });
 }
 
 // compare Password

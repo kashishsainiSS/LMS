@@ -1,5 +1,6 @@
 import {registrationUser} from "../repository/account.repository";
 import {NextFunction, Request,Response } from "express";
+import Account from "../repository/schema/accounts.schema";
 
 export async function CreateUserService(req:Request, res:Response,next:NextFunction){
     try{
@@ -15,4 +16,14 @@ export async function CreateUserService(req:Request, res:Response,next:NextFunct
     }catch(error:any){
         throw new Error(error.message);
     }
+}
+
+
+export const getUserById = async(id:string, res:Response)=>{
+    const user = await Account.findById(id);
+    res.status(200).json({
+        status:"success",
+        user
+    })
+
 }

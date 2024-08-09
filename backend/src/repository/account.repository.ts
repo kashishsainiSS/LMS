@@ -2,15 +2,16 @@ import Account, { IAccount } from "./schema/accounts.schema";
 import bcrypt from "bcryptjs";
 import { hash } from "crypto";
 import dotenv from "dotenv";
-import jwt from "jsonwebtoken";
+import jwt ,{JwtPayload} from "jsonwebtoken";
 import ErrorHandler from "../utils/ErrorHandler";
 import { CatchAsyncError } from "../middlewares/catchAsyncErrors";
 import { NextFunction, Request, Response } from "express";
 import ejs from "ejs";
 import path from "path";
 import {SendMail} from '../utils/sendMail';
-import { sendToken } from "../utils/jwt";
+import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt";
 import { redis } from "../db/redis";
+import { getUserById } from "../service/account.service";
 
 dotenv.config();
 
@@ -85,6 +86,7 @@ interface IActivateRequest{
   activation_token:string;
   activation_code:string;
 }
+
 export const ActivateUser = CatchAsyncError(async(req:Request, res:Response, next:NextFunction)=>{
   try{
      const {activation_token, activation_code} = req.body as IActivateRequest;
@@ -172,6 +174,101 @@ export const logoutUser = CatchAsyncError(
       })
     }catch(error:any){
       return next(new ErrorHandler(error.message,400));
+    }
+  }
+)
+
+
+// update access token
+export const updateAccessToken = CatchAsyncError(async(req:Request, res:Response,next:NextFunction)=>{
+  try{
+     const refresh_token = req.cookies.refresh_token;
+     const decode = jwt.verify(refresh_token, process.env.REFRESH_TOKEN as string)as JwtPayload;
+
+     const message ="Could not refresh token";
+
+     if(!decode){
+      return next(new ErrorHandler(message,400));
+     }
+     const session = await redis.get(decode.id as string);
+
+     if(!session){
+        return next(new ErrorHandler(message,400));
+     }
+     const user = JSON.parse(session);
+
+     const accessToken = jwt.sign({id:user._id}, process.env.ACCESS_TOKEN as string,{
+      expiresIn:"5m"
+     });
+     const refreshToken = jwt.sign({id:user._id},process.env.REFRESH_TOKEN as string,{
+      expiresIn:'3d'
+     });
+
+     res.cookie("access_token", accessToken, accessTokenOptions);
+     res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+
+     res.status(200).json({
+      status:"success",
+      accessToken
+     })
+
+  }catch(error:any){
+    return next(new ErrorHandler(error.message, 400));
+  }
+})
+
+
+// get user Info
+
+export const getUserInfo= CatchAsyncError(async(req:any,res:Response, next:NextFunction)=>{
+  try{
+       const userId = req?.user._id;
+    getUserById(userId,res);
+  }catch(error:any){
+    return next(new ErrorHandler(error.message,400));
+  }
+})
+
+
+interface ISocialAuthBody{
+  email:string,
+  name:string,
+  avatar:string,
+}
+
+export const socialAuth = CatchAsyncError(async(req:any, res:Response, next:NextFunction)=>{
+  try{
+      const {email, name, avatar} = req.body as ISocialAuthBody;
+      const user = await Account.findOne({email});
+      console.log("user",user);
+      if(!user){
+        const newUser = await Account.create({email, name, avatar});
+        console.log("new User",newUser);
+        sendToken(newUser,200, res);
+      }else{
+        sendToken(user,200, res);
+      }
+
+  }catch(error:any){
+    return next(new ErrorHandler(error.message, 400));
+  }
+})
+
+interface IUpdateUserInfo{
+  email:string,
+  name:string
+}
+
+export const updateUserInfo = CatchAsyncError(
+  async(req:any, res:Response, next:NextFunction)=>{
+    try{
+       const {email, name} = req.body as IUpdateUserInfo;
+       const userId = req.user._id;
+       const user = await Account.findOne({userId});
+
+       
+    }catch(error:any){
+      return next(new ErrorHandler(error.message, 400))
     }
   }
 )
